@@ -1,6 +1,8 @@
 import { NextRequest } from 'next/server';
 
 export const dynamic = 'force-dynamic';
+// Document reading and first-time translation can take a while; this is the longest the free Vercel plan allows.
+export const maxDuration = 60;
 
 const BACKEND = (process.env.BACKEND_URL ?? 'http://localhost:8000').replace(/\/$/, '');
 
