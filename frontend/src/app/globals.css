@@ -1,0 +1,81 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --page: #f6f7f9;
+  --surface: #ffffff;
+  --ink: #111c2d;
+  --ink-muted: #46546a;
+  --ink-faint: #66738a;
+  --line: #dde2ea;
+  --line-strong: #b9c2d0;
+  --brand: #1b4b8f;
+  --brand-hover: #143a70;
+  --brand-soft: #e9f0fa;
+  --ok: #17663a;
+  --ok-soft: #e6f3ec;
+  --warn: #7d5200;
+  --warn-soft: #fff3d6;
+  --bad: #a12626;
+  --bad-soft: #fbe9e9;
+}
+
+@layer base {
+  html {
+    -webkit-text-size-adjust: 100%;
+  }
+  body {
+    @apply bg-page font-sans text-base text-ink antialiased;
+  }
+  h1, h2, h3 {
+    @apply font-semibold tracking-tight text-ink;
+  }
+  :focus-visible {
+    outline: 3px solid var(--brand);
+    outline-offset: 2px;
+    border-radius: 4px;
+  }
+  button, [role='button'], a, select, input {
+    -webkit-tap-highlight-color: transparent;
+  }
+}
+
+@layer components {
+  .btn {
+    @apply inline-flex min-h-tap items-center justify-center gap-2 rounded border px-5 font-medium transition-colors
+      disabled:cursor-not-allowed disabled:opacity-50;
+  }
+  .btn-primary {
+    @apply btn border-brand bg-brand text-white hover:bg-brand-hover;
+  }
+  .btn-secondary {
+    @apply btn border-line-strong bg-surface text-ink hover:bg-brand-soft;
+  }
+  .btn-quiet {
+    @apply btn border-transparent bg-transparent px-3 text-ink-muted hover:bg-brand-soft hover:text-ink;
+  }
+  .field {
+    @apply min-h-tap w-full rounded border border-line-strong bg-surface px-4 text-ink placeholder:text-ink-faint;
+  }
+}
+
+/* The conversation page fills the viewport; its messages scroll inside it. */
+.shell:has(#chat-root) { height: 100dvh; }
+
+/* Avatar motion */
+@keyframes sa-breathe {
+  0%, 100% { transform: translateY(0) scaleY(1); }
+  50% { transform: translateY(-1.5px) scaleY(1.008); }
+}
+@keyframes sa-blink {
+  0%, 94%, 100% { transform: scaleY(1); }
+  97% { transform: scaleY(0.08); }
+}
+.sa-breathe { animation: sa-breathe 4.5s ease-in-out infinite; transform-origin: 50% 100%; }
+.sa-blink { animation: sa-blink 5.5s ease-in-out infinite; transform-box: fill-box; transform-origin: center; }
+
+@media (prefers-reduced-motion: reduce) {
+  .sa-breathe, .sa-blink { animation: none; }
+  html { scroll-behavior: auto !important; }
+}

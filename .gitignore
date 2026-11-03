@@ -1,5 +1,8 @@
 .env
+.env.local
 __pycache__/
 *.pyc
 *.wav
-.streamlit/
+.pytest_cache/
+node_modules/
+.next/
