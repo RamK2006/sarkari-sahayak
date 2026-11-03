@@ -1,0 +1,272 @@
+[
+  {
+    "id": "pm-kisan",
+    "name": "PM-KISAN Samman Nidhi",
+    "name_hi": "पीएम-किसान सम्मान निधि",
+    "description": "Direct income support of ₹6,000 per year to farmer families, paid in three equal installments.",
+    "ministry": "Ministry of Agriculture & Farmers Welfare",
+    "category": ["agriculture", "direct_benefit"],
+    "benefits": "₹6,000 per year (₹2,000 every 4 months) directly to bank account",
+    "eligibility": {
+      "occupation": ["farmer"],
+      "land_ownership_required": true,
+      "excluded_income_tax_payer": true,
+      "excluded_government_employee": true
+    },
+    "documents_required": ["Aadhaar card", "Bank account passbook", "Land ownership records (Khasra/Khatauni)", "Aadhaar-linked mobile number"],
+    "application_url": "https://pmkisan.gov.in",
+    "source_url": "https://pmkisan.gov.in/Guidelines.aspx"
+  },
+  {
+    "id": "pmay-gramin",
+    "name": "Pradhan Mantri Awas Yojana – Gramin (PMAY-G)",
+    "name_hi": "प्रधानमंत्री आवास योजना – ग्रामीण",
+    "description": "Financial assistance for construction of pucca houses for rural poor who are houseless or living in kutcha/dilapidated houses.",
+    "ministry": "Ministry of Rural Development",
+    "category": ["housing", "rural"],
+    "benefits": "₹1,20,000 in plains and ₹1,30,000 in hilly/difficult areas for house construction",
+    "eligibility": {
+      "rural_urban": "rural",
+      "has_pucca_house": false,
+      "is_bpl_or_deprived": true,
+      "excluded_income_tax_payer": true,
+      "excluded_government_employee": true
+    },
+    "documents_required": ["Aadhaar card", "BPL card or SECC-2011 inclusion", "Bank account passbook", "Photograph", "Land documents (if available)"],
+    "application_url": "https://pmayg.nic.in",
+    "source_url": "https://pmayg.nic.in/netiay/about-us.aspx"
+  },
+  {
+    "id": "pmay-urban",
+    "name": "Pradhan Mantri Awas Yojana – Urban (PMAY-U)",
+    "name_hi": "प्रधानमंत्री आवास योजना – शहरी",
+    "description": "Affordable housing for urban poor through interest subsidy on home loans and direct assistance.",
+    "ministry": "Ministry of Housing & Urban Affairs",
+    "category": ["housing", "urban"],
+    "benefits": "Interest subsidy of 6.5% on home loans up to ₹6 lakh for EWS/LIG; up to 4% for MIG",
+    "eligibility": {
+      "rural_urban": "urban",
+      "has_pucca_house": false,
+      "max_annual_income_ews": 300000,
+      "max_annual_income_lig": 600000,
+      "excluded_government_employee": false
+    },
+    "documents_required": ["Aadhaar card", "Income certificate", "Bank account passbook", "Address proof", "Affidavit of not owning a pucca house"],
+    "application_url": "https://pmaymis.gov.in",
+    "source_url": "https://mohua.gov.in/cms/pmay.php"
+  },
+  {
+    "id": "pmjay",
+    "name": "Ayushman Bharat – Pradhan Mantri Jan Arogya Yojana (PM-JAY)",
+    "name_hi": "आयुष्मान भारत – प्रधानमंत्री जन आरोग्य योजना",
+    "description": "Health insurance of ₹5 lakh per family per year for secondary and tertiary hospitalisation.",
+    "ministry": "Ministry of Health & Family Welfare",
+    "category": ["health", "insurance"],
+    "benefits": "₹5,00,000 health cover per family per year at empanelled hospitals. Covers 1,950+ procedures.",
+    "eligibility": {
+      "is_bpl_or_deprived": true,
+      "max_annual_income": 500000,
+      "excluded_income_tax_payer": true,
+      "excluded_government_employee": true
+    },
+    "documents_required": ["Aadhaar card", "Ration card / BPL card", "SECC-2011 inclusion proof", "Mobile number", "Family ID (where applicable)"],
+    "application_url": "https://mera.pmjay.gov.in",
+    "source_url": "https://pmjay.gov.in/about/pmjay"
+  },
+  {
+    "id": "ujjwala",
+    "name": "Pradhan Mantri Ujjwala Yojana (PMUY)",
+    "name_hi": "प्रधानमंत्री उज्ज्वला योजना",
+    "description": "Free LPG connection to women from BPL households to replace unclean cooking fuel.",
+    "ministry": "Ministry of Petroleum & Natural Gas",
+    "category": ["energy", "women"],
+    "benefits": "Free LPG connection with a financial support of ₹1,600 per connection. First refill and stove free.",
+    "eligibility": {
+      "gender_preference": "female",
+      "is_bpl_or_deprived": true,
+      "has_lpg_connection": false,
+      "min_age": 18
+    },
+    "documents_required": ["Aadhaar card", "BPL card / SECC-2011 list", "Bank account passbook", "Passport-size photograph", "Proof of address"],
+    "application_url": "https://www.pmuy.gov.in",
+    "source_url": "https://www.pmuy.gov.in/about.html"
+  },
+  {
+    "id": "sukanya-samriddhi",
+    "name": "Sukanya Samriddhi Yojana (SSY)",
+    "name_hi": "सुकन्या समृद्धि योजना",
+    "description": "Government-backed savings scheme for the girl child with high interest rate and tax benefits.",
+    "ministry": "Ministry of Finance",
+    "category": ["savings", "girl_child"],
+    "benefits": "Interest rate ~8.2% p.a. (government-set). Tax-free maturity. Min deposit ₹250/year, max ₹1,50,000/year.",
+    "eligibility": {
+      "has_daughter": true,
+      "max_daughter_age": 10,
+      "max_accounts": 2
+    },
+    "documents_required": ["Birth certificate of girl child", "Parent/guardian Aadhaar card", "Parent/guardian PAN card", "Address proof", "Photograph of parent/guardian"],
+    "application_url": "Post offices and authorised banks",
+    "source_url": "https://www.india.gov.in/sukanya-samriddhi-yojna"
+  },
+  {
+    "id": "mudra",
+    "name": "Pradhan Mantri MUDRA Yojana (PMMY)",
+    "name_hi": "प्रधानमंत्री मुद्रा योजना",
+    "description": "Collateral-free loans up to ₹10 lakh for micro and small enterprises.",
+    "ministry": "Ministry of Finance",
+    "category": ["business", "loan"],
+    "benefits": "Shishu: up to ₹50,000 | Kishore: ₹50,001 to ₹5,00,000 | Tarun: ₹5,00,001 to ₹10,00,000. No collateral required.",
+    "eligibility": {
+      "occupation": ["self_employed", "farmer", "artisan", "street_vendor"],
+      "has_business_plan": true,
+      "excluded_corporate": true
+    },
+    "documents_required": ["Aadhaar card", "PAN card", "Business plan / proposal", "Proof of business (if existing)", "Passport-size photographs", "Bank account statements (6 months)"],
+    "application_url": "https://www.mudra.org.in",
+    "source_url": "https://www.mudra.org.in/offerings"
+  },
+  {
+    "id": "atal-pension",
+    "name": "Atal Pension Yojana (APY)",
+    "name_hi": "अटल पेंशन योजना",
+    "description": "Guaranteed pension of ₹1,000 to ₹5,000 per month after age 60 for unorganised sector workers.",
+    "ministry": "Ministry of Finance (PFRDA)",
+    "category": ["pension", "social_security"],
+    "benefits": "Monthly pension of ₹1,000 to ₹5,000 after age 60. Government co-contributes 50% of premium for 5 years (for non-taxpayers who joined before 31 March 2016).",
+    "eligibility": {
+      "min_age": 18,
+      "max_age": 40,
+      "excluded_income_tax_payer": true,
+      "excluded_government_employee": true,
+      "has_bank_account_required": true
+    },
+    "documents_required": ["Aadhaar card", "Bank account / savings account", "Mobile number linked to bank account"],
+    "application_url": "Any bank branch or via net banking",
+    "source_url": "https://www.npscra.nsdl.co.in/scheme-details.php"
+  },
+  {
+    "id": "pm-vishwakarma",
+    "name": "PM Vishwakarma",
+    "name_hi": "पीएम विश्वकर्मा",
+    "description": "End-to-end support for traditional artisans and craftworkers through skills, tools, credit, and market access.",
+    "ministry": "Ministry of Micro, Small & Medium Enterprises",
+    "category": ["artisan", "skill_development", "loan"],
+    "benefits": "Skills training with ₹500/day stipend. Toolkit incentive up to ₹15,000. Collateral-free loans: ₹1 lakh (Stage 1) + ₹2 lakh (Stage 2) at 5% interest. Digital incentives and marketing support.",
+    "eligibility": {
+      "is_artisan": true,
+      "min_age": 18,
+      "artisan_trades": ["carpenter", "blacksmith", "goldsmith", "potter", "sculptor", "cobbler", "mason", "basket_weaver", "doll_maker", "barber", "garland_maker", "washerman", "tailor", "fishing_net_maker", "locksmith", "armourer", "boat_maker", "hammer_and_toolkit_maker"],
+      "excluded_government_employee": true
+    },
+    "documents_required": ["Aadhaar card", "Bank account passbook", "Mobile number", "Ration card (optional)", "Proof of artisan trade (self-declaration / panchayat certificate)"],
+    "application_url": "https://pmvishwakarma.gov.in",
+    "source_url": "https://pmvishwakarma.gov.in/About"
+  },
+  {
+    "id": "nsap-ignoaps",
+    "name": "Indira Gandhi National Old Age Pension Scheme (IGNOAPS)",
+    "name_hi": "इंदिरा गांधी राष्ट्रीय वृद्धावस्था पेंशन योजना",
+    "description": "Monthly pension for BPL senior citizens aged 60 and above.",
+    "ministry": "Ministry of Rural Development",
+    "category": ["pension", "senior_citizen"],
+    "benefits": "₹200/month (age 60-79) + state top-up. ₹500/month (age 80+). Many states add ₹300-₹2,000 on top.",
+    "eligibility": {
+      "min_age": 60,
+      "is_bpl_or_deprived": true,
+      "excluded_government_employee": true
+    },
+    "documents_required": ["Aadhaar card", "Age proof (voter ID / birth certificate)", "BPL card", "Bank account passbook", "Passport-size photograph"],
+    "application_url": "https://nsap.nic.in",
+    "source_url": "https://nsap.nic.in/ignoaps.html"
+  },
+  {
+    "id": "pmmvy",
+    "name": "Pradhan Mantri Matru Vandana Yojana (PMMVY)",
+    "name_hi": "प्रधानमंत्री मातृ वंदना योजना",
+    "description": "Cash incentive for pregnant women and lactating mothers for the first living child.",
+    "ministry": "Ministry of Women & Child Development",
+    "category": ["women", "maternity", "direct_benefit"],
+    "benefits": "₹5,000 in three installments for the first child. ₹6,000 for second child if it is a girl.",
+    "eligibility": {
+      "gender_preference": "female",
+      "is_pregnant_or_lactating": true,
+      "min_age": 19,
+      "excluded_government_employee": true
+    },
+    "documents_required": ["Aadhaar card", "Bank account passbook", "MCP (Mother and Child Protection) card", "Pregnancy registration proof", "Last menstrual period (LMP) date"],
+    "application_url": "https://pmmvy.wcd.gov.in",
+    "source_url": "https://wcd.nic.in/schemes/pmmvy"
+  },
+  {
+    "id": "nsp-post-matric",
+    "name": "Post-Matric Scholarship for SC/ST/OBC/Minority Students",
+    "name_hi": "एससी/एसटी/ओबीसी/अल्पसंख्यक छात्रों के लिए पोस्ट-मैट्रिक छात्रवृत्ति",
+    "description": "Scholarships for students from disadvantaged communities pursuing post-matriculation education.",
+    "ministry": "Ministry of Social Justice / Ministry of Tribal Affairs / Ministry of Minority Affairs",
+    "category": ["education", "scholarship"],
+    "benefits": "Covers tuition fees, maintenance allowance, and other expenses. Amount varies by course and category.",
+    "eligibility": {
+      "is_student": true,
+      "caste_categories": ["sc", "st", "obc"],
+      "education_level_min": "higher_secondary",
+      "max_annual_income_sc_st": 250000,
+      "max_annual_income_obc": 100000
+    },
+    "documents_required": ["Aadhaar card", "Caste certificate", "Income certificate", "Previous year marksheet", "Current admission proof / bonafide certificate", "Bank account passbook", "Passport-size photograph"],
+    "application_url": "https://scholarships.gov.in",
+    "source_url": "https://scholarships.gov.in/public/schemeGuidelines"
+  },
+  {
+    "id": "pm-svanidhi",
+    "name": "PM Street Vendor's AtmaNirbhar Nidhi (PM SVANidhi)",
+    "name_hi": "पीएम स्ट्रीट वेंडर्स आत्मनिर्भर निधि",
+    "description": "Working capital loan for street vendors to resume livelihood.",
+    "ministry": "Ministry of Housing & Urban Affairs",
+    "category": ["loan", "street_vendor"],
+    "benefits": "₹10,000 (1st loan) → ₹20,000 (2nd loan) → ₹50,000 (3rd loan). 7% interest subsidy. Cashback incentive for digital transactions.",
+    "eligibility": {
+      "is_street_vendor": true,
+      "occupation": ["street_vendor"],
+      "has_vendor_certificate": true
+    },
+    "documents_required": ["Aadhaar card", "Vending certificate / Letter of recommendation from ULB", "Bank account passbook", "Passport-size photograph", "Mobile number"],
+    "application_url": "https://pmsvanidhi.mohua.gov.in",
+    "source_url": "https://pmsvanidhi.mohua.gov.in/About"
+  },
+  {
+    "id": "pmgkay",
+    "name": "Pradhan Mantri Garib Kalyan Anna Yojana (PMGKAY)",
+    "name_hi": "प्रधानमंत्री गरीब कल्याण अन्न योजना",
+    "description": "Free foodgrain distribution to priority households and Antyodaya families under the National Food Security Act.",
+    "ministry": "Ministry of Consumer Affairs, Food & Public Distribution",
+    "category": ["food_security", "direct_benefit"],
+    "benefits": "5 kg free foodgrain per person per month for priority households. 35 kg per family for Antyodaya (AAY) households.",
+    "eligibility": {
+      "is_bpl_or_deprived": true,
+      "has_ration_card_required": true,
+      "excluded_income_tax_payer": true
+    },
+    "documents_required": ["Ration card (PHH or AAY)", "Aadhaar card (for biometric verification)", "Family members list on ration card"],
+    "application_url": "Nearest Fair Price Shop (ration shop)",
+    "source_url": "https://nfsa.gov.in"
+  },
+  {
+    "id": "nsap-ignwps",
+    "name": "Indira Gandhi National Widow Pension Scheme (IGNWPS)",
+    "name_hi": "इंदिरा गांधी राष्ट्रीय विधवा पेंशन योजना",
+    "description": "Monthly pension for widows from BPL families aged 40-79.",
+    "ministry": "Ministry of Rural Development",
+    "category": ["pension", "women", "widow"],
+    "benefits": "₹300/month from central government + state top-up (varies by state, total often ₹1,000-₹2,500/month).",
+    "eligibility": {
+      "gender_preference": "female",
+      "is_widow": true,
+      "min_age": 40,
+      "max_age": 79,
+      "is_bpl_or_deprived": true
+    },
+    "documents_required": ["Aadhaar card", "Husband's death certificate", "BPL card", "Age proof", "Bank account passbook", "Passport-size photograph"],
+    "application_url": "https://nsap.nic.in",
+    "source_url": "https://nsap.nic.in/ignwps.html"
+  }
+]
