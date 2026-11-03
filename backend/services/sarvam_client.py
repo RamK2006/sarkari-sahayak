@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import base64
 import logging
+import re
 import threading
 import time
 from functools import lru_cache
@@ -66,21 +67,33 @@ class SarvamClient:
             raise SarvamUnavailable("chat") from exc
 
     # ── Translation ─────────────────────────────────────────────────────
+    def detect_language(self, text: str) -> str:
+        """BCP-47 code of the text's language (Sarvam language identification); English if it cannot tell."""
+        try:
+            code = self._client.text.identify_language(input=text[:500]).language_code or ""
+        except Exception as exc:  # noqa: BLE001
+            log.info("Language identification failed: %.150s", exc)
+            return "en-IN"
+        return code if re.fullmatch(r"[a-z]{2,3}-IN", code) else "en-IN"
+
     def translate(self, text: str, target: str, source: str = "en") -> str:
-        """Translate text. `source="auto"` (language detection) is only supported by Mayura, so it routes there;
-        everything else uses Sarvam-Translate. Rate-limit responses are retried with backoff."""
-        if not text.strip() or target == source:
+        """Translate text with Sarvam-Translate (all 22 languages). `source="auto"` detects the language first,
+        because Sarvam-Translate needs an explicit source. Rate-limit responses are retried with backoff."""
+        if not text.strip():
             return text
-        model = "mayura:v1" if source == "auto" else self._settings.TRANSLATE_MODEL
+        src_code = self.detect_language(text) if source == "auto" else bcp47(source)
+        tgt_code = bcp47(target)
+        if src_code == tgt_code:
+            return text
         last: Exception | None = None
         for attempt in range(4):
             try:
                 with _translate_slots:
                     resp = self._client.text.translate(
                         input=text,
-                        source_language_code="auto" if source == "auto" else bcp47(source),
-                        target_language_code=bcp47(target),
-                        model=model,
+                        source_language_code=src_code,
+                        target_language_code=tgt_code,
+                        model=self._settings.TRANSLATE_MODEL,
                         mode="formal",
                     )
                 return resp.translated_text
@@ -89,7 +102,7 @@ class SarvamClient:
                 if "429" not in str(exc) and "rate" not in str(exc).lower():
                     break
                 time.sleep(1.5 * (2**attempt))
-        log.warning("Sarvam translate failed (%s -> %s): %.200s", source, target, last)
+        log.warning("Sarvam translate failed (%s -> %s): %.200s", src_code, tgt_code, last)
         raise SarvamUnavailable("translate") from last
 
     # ── Speech ──────────────────────────────────────────────────────────
