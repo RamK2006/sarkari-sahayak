@@ -54,6 +54,41 @@ def load_schemes(path: Optional[str] = None) -> List[Dict]:
         return json.load(f)
 
 
+def get_all_categories(schemes: Optional[List[Dict]] = None) -> List[str]:
+    """Return all unique scheme categories."""
+    if schemes is None:
+        schemes = load_schemes()
+    cats = set()
+    for s in schemes:
+        for c in s.get("category", []):
+            cats.add(c)
+    return sorted(list(cats))
+
+
+def filter_schemes(
+    schemes: Optional[List[Dict]] = None,
+    category: Optional[str] = None,
+    query: Optional[str] = None,
+) -> List[Dict]:
+    """Filter schemes by category or search query string."""
+    if schemes is None:
+        schemes = load_schemes()
+    filtered = schemes
+    if category and category.lower() != "all":
+        filtered = [s for s in filtered if category.lower() in [c.lower() for c in s.get("category", [])]]
+    if query:
+        q = query.lower().strip()
+        filtered = [
+            s for s in filtered
+            if q in s.get("name", "").lower()
+            or q in s.get("name_hi", "").lower()
+            or q in s.get("description", "").lower()
+            or q in s.get("ministry", "").lower()
+            or any(q in c.lower() for c in s.get("category", []))
+        ]
+    return filtered
+
+
 def _get(profile: Dict, key: str, default=None):
     """Safely get a value from the profile dict."""
     val = profile.get(key)

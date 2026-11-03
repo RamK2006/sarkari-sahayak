@@ -109,12 +109,15 @@ class SarvamClient:
 
     # ── Document AI ───────────────────────────────────────────────────
     def parse_document(self, file_bytes: bytes, filename: str = "document.pdf") -> str:
-        """Parse a document using Doc AI and return extracted text."""
+        """Parse a document using Doc AI and return extracted clean text."""
         import time
 
         mime = "application/pdf"
-        if filename.lower().endswith((".png", ".jpg", ".jpeg")):
+        fn_lower = filename.lower()
+        if fn_lower.endswith((".png", ".jpg", ".jpeg")):
             mime = "image/jpeg"
+        elif fn_lower.endswith(".pdf"):
+            mime = "application/pdf"
 
         # Start parse job
         resp = self.client.doc_ai.parse(
@@ -125,12 +128,33 @@ class SarvamClient:
         # Poll for completion (max 60 seconds)
         for _ in range(30):
             status = self.client.doc_ai.get_status(job_id)
-            if status.status == "completed":
+            if status.status in ("completed", "SUCCESS"):
                 break
+            elif status.status in ("failed", "FAILED", "error"):
+                raise RuntimeError(f"Doc AI job failed for {filename}")
             time.sleep(2)
         else:
             raise TimeoutError(f"Document parsing timed out for job {job_id}")
 
-        # Get results
-        results = self.client.doc_ai.get_results(job_id, format="md")
-        return results.result if hasattr(results, "result") else str(results)
+        # Fetch raw JSON directly via client wrapper to bypass SDK pydantic tagged-union bug
+        raw_wrapper = self.client.doc_ai._raw_client._client_wrapper
+        res = raw_wrapper.httpx_client.request(
+            f"doc-ai/v1/job/{job_id}/results",
+            base_url=raw_wrapper.get_environment().base,
+            method="GET",
+        )
+        data = res.json()
+
+        # Extract text blocks
+        lines = []
+        for doc in data.get("documents", []):
+            for page in doc.get("pages", []):
+                for block in page.get("blocks", []):
+                    t = block.get("text", "").strip()
+                    if t:
+                        lines.append(t)
+
+        extracted = "\n".join(lines).strip()
+        if not extracted:
+            return "No readable text could be extracted from this document."
+        return extracted
