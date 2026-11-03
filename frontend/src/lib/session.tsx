@@ -1,30 +1,19 @@
 'use client';
 
-import {
-  createContext,
-  useCallback,
-  useContext,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-  type ReactNode,
-} from 'react';
-import { api, ApiError } from './api';
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+import { api, ApiError, type Citizen } from './api';
 import { useI18n } from './i18n';
-import type { IntakeState, Message, Profile, Question } from './types';
+import type { ChatResponse, Gesture, Message, Mood, Profile } from './types';
+import { useVault } from './vault';
 
-const STORAGE_KEY = 'sa.session.v1';
+const STORAGE_KEY = 'sa.session.v2';
 
 interface Persisted {
   profile: Profile;
   skipped: string[];
   messages: Message[];
-  question: Question | null;
-  ready: boolean;
 }
-
-const EMPTY: Persisted = { profile: {}, skipped: [], messages: [], question: null, ready: false };
+const EMPTY: Persisted = { profile: {}, skipped: [], messages: [] };
 
 export type Busy = 'idle' | 'processing' | 'translating';
 
@@ -32,39 +21,43 @@ interface SessionApi extends Persisted {
   hydrated: boolean;
   busy: Busy;
   error: string | null;
+  /** Latest emotion and gesture requested by the assistant; consumed by the avatar. */
+  mood: Mood;
+  gesture: { value: Gesture; key: number };
+  /** Send a message (typed or transcribed). Resolves with the response so voice mode can speak it. */
+  send: (text: string) => Promise<ChatResponse | null>;
+  /** Save a structured answer from the quick check or a document. */
+  setFacts: (facts: Profile, skippedFields?: string[]) => void;
   answer: (field: string, value: string | number | boolean | null) => Promise<void>;
-  sendText: (text: string) => Promise<void>;
-  askAgain: (field: string) => Promise<void>;
   restart: () => void;
   clearError: () => void;
-  /** Citizen payload for API calls that evaluate eligibility. */
-  citizen: { language: string; profile: Profile; skipped: string[] };
+  citizen: Citizen;
 }
 
 const Ctx = createContext<SessionApi | null>(null);
 
 let counter = 0;
 const nextId = () => `m${Date.now().toString(36)}${(counter++).toString(36)}`;
-
 const errorCode = (e: unknown) => (e instanceof ApiError ? e.code : 'generic');
 
 export function SessionProvider({ children }: { children: ReactNode }) {
   const { language } = useI18n();
+  const vault = useVault();
   const [state, setState] = useState<Persisted>(EMPTY);
   const [hydrated, setHydrated] = useState(false);
   const [busy, setBusy] = useState<Busy>('idle');
   const [error, setError] = useState<string | null>(null);
-  const stateRef = useRef(state);
-  stateRef.current = state;
-  const seeding = useRef(false);
+  const [mood, setMood] = useState<Mood>('neutral');
+  const [gesture, setGesture] = useState<{ value: Gesture; key: number }>({ value: 'none', key: 0 });
+  const ref = useRef(state);
+  ref.current = state;
 
-  // Restore from this browser; nothing is stored on the server.
   useEffect(() => {
     try {
       const raw = localStorage.getItem(STORAGE_KEY);
       if (raw) setState({ ...EMPTY, ...(JSON.parse(raw) as Persisted) });
     } catch {
-      /* corrupt or unavailable storage: start fresh */
+      /* start fresh */
     }
     setHydrated(true);
   }, []);
@@ -78,131 +71,84 @@ export function SessionProvider({ children }: { children: ReactNode }) {
     }
   }, [state, hydrated]);
 
-  const citizen = useMemo(
-    () => ({ language, profile: state.profile, skipped: state.skipped }),
-    [language, state.profile, state.skipped],
+  const citizen = useMemo<Citizen>(
+    () => ({ language, profile: state.profile, skipped: state.skipped, vault: vault.refs }),
+    [language, state.profile, state.skipped, vault.refs],
   );
+  const citizenRef = useRef(citizen);
+  citizenRef.current = citizen;
 
-  const apply = useCallback((res: IntakeState, extra: Message[] = []) => {
-    setState((s) => {
-      const messages = [...s.messages, ...extra];
-      return { ...s, profile: res.profile, skipped: res.skipped, question: res.next_question, ready: res.ready, messages };
-    });
-  }, []);
-
-  /** Messages the assistant adds after the state changes: the next question, or completion. */
-  const followUp = useCallback((res: IntakeState, before: Persisted): Message[] => {
-    if (res.next_question) {
-      return [{ id: nextId(), role: 'assistant', kind: 'question', field: res.next_question.field }];
+  const send = useCallback<SessionApi['send']>(async (text) => {
+    setError(null);
+    setBusy('processing');
+    setMood('thinking');
+    const before = ref.current;
+    const history = before.messages
+      .filter((m) => m.kind === 'text')
+      .map((m) => ({ role: m.role, content: (m as { text: string }).text }));
+    setState((s) => ({ ...s, messages: [...s.messages, { id: nextId(), role: 'user', kind: 'text', text }] }));
+    try {
+      const res = await api.chat(citizenRef.current, text, history);
+      setState((s) => ({
+        ...s,
+        profile: res.profile,
+        skipped: res.skipped,
+        messages: [
+          ...s.messages,
+          { id: nextId(), role: 'assistant', kind: 'text', text: res.reply, lang: citizenRef.current.language, mood: res.mood, schemes: res.schemes.map((c) => c.scheme.id), guide: res.guide, upload: res.upload },
+        ],
+      }));
+      setMood(res.mood);
+      setGesture((g) => ({ value: res.gesture, key: g.key + 1 }));
+      return res;
+    } catch (e) {
+      setMood('empathetic');
+      setError(errorCode(e));
+      return null;
+    } finally {
+      setBusy('idle');
     }
-    const alreadyDone = before.messages.some((m) => m.kind === 'all_done');
-    return res.ready && !alreadyDone ? [{ id: nextId(), role: 'assistant', kind: 'all_done' }] : [];
   }, []);
 
-  // Greeting and the first question for a new (or restarted) conversation.
-  const empty = state.messages.length === 0;
-  useEffect(() => {
-    if (!hydrated || !empty || seeding.current) return;
-    seeding.current = true;
-    api
-      .intakeState({ language, profile: {}, skipped: [] })
-      .then((res) => {
-        apply(res, [
-          { id: nextId(), role: 'assistant', kind: 'greeting' },
-          ...followUp(res, EMPTY),
-        ]);
-      })
-      .catch((e) => setError(errorCode(e)))
-      .finally(() => {
-        seeding.current = false;
-      });
-  }, [hydrated, empty, language, apply, followUp]);
+  const setFacts = useCallback<SessionApi['setFacts']>((facts, skippedFields = []) => {
+    setState((s) => ({
+      ...s,
+      profile: { ...s.profile, ...facts },
+      skipped: [...new Set([...s.skipped.filter((f) => !(f in facts)), ...skippedFields])],
+    }));
+  }, []);
 
-  const answer = useCallback<SessionApi['answer']>(
-    async (field, value) => {
-      setError(null);
-      setBusy('processing');
-      const before = stateRef.current;
-      try {
-        const res = await api.answer({ language, profile: before.profile, skipped: before.skipped }, field, value);
-        apply(res, [{ id: nextId(), role: 'user', kind: 'answer', field, value }, ...followUp(res, before)]);
-      } catch (e) {
-        setError(errorCode(e));
-      } finally {
-        setBusy('idle');
-      }
-    },
-    [language, apply, followUp],
-  );
-
-  const sendText = useCallback<SessionApi['sendText']>(
-    async (text) => {
-      setError(null);
-      setBusy('processing');
-      const before = stateRef.current;
-      const history = before.messages
-        .filter((m) => m.kind === 'text')
-        .map((m) => ({ role: m.role, content: (m as { text: string }).text }));
-      const userMsg: Message = { id: nextId(), role: 'user', kind: 'text', text };
-      setState((s) => ({ ...s, messages: [...s.messages, userMsg] }));
-      try {
-        const res = await api.chat({ language, profile: before.profile, skipped: before.skipped }, text, history, before.question?.field ?? null);
-        const out: Message[] = [];
-        if (res.reply) out.push({ id: nextId(), role: 'assistant', kind: 'text', text: res.reply, lang: language });
-        const changed = Object.keys(res.applied).length > 0;
-        if (!res.reply && !changed) out.push({ id: nextId(), role: 'assistant', kind: 'error', code: 'generic' });
-        // Ask the next question again after a free-text reply so the conversation ends on it.
-        if (res.reply || changed) out.push(...followUp(res, before));
-        apply(res, out);
-      } catch (e) {
-        setError(errorCode(e));
-      } finally {
-        setBusy('idle');
-      }
-    },
-    [language, apply, followUp],
-  );
-
-  const askAgain = useCallback<SessionApi['askAgain']>(
-    async (field) => {
-      setError(null);
-      try {
-        const question = await api.question(field);
-        setState((s) => ({
-          ...s,
-          question,
-          messages: [...s.messages, { id: nextId(), role: 'assistant', kind: 'question', field }],
-        }));
-      } catch (e) {
-        setError(errorCode(e));
-      }
-    },
-    [],
-  );
+  const answer = useCallback<SessionApi['answer']>(async (field, value) => {
+    setError(null);
+    try {
+      const res = await api.answer(citizenRef.current, field, value);
+      setState((s) => ({ ...s, profile: res.profile, skipped: res.skipped }));
+    } catch (e) {
+      setError(errorCode(e));
+    }
+  }, []);
 
   const restart = useCallback(() => {
     setState(EMPTY);
     setError(null);
+    setMood('neutral');
   }, []);
 
-  // When the language changes, translate free-text replies from the model so nothing stays stale.
-  // Questions, greetings and results are rendered from locale files and update instantly.
+  // A language switch translates earlier replies so nothing stays stale; the interface itself updates instantly.
   useEffect(() => {
     if (!hydrated) return;
-    const stale = stateRef.current.messages.filter((m) => m.kind === 'text' && m.role === 'assistant' && m.lang !== language);
+    const stale = ref.current.messages.filter((m) => m.kind === 'text' && m.role === 'assistant' && m.lang !== language);
     if (stale.length === 0) return;
     let cancelled = false;
     setBusy('translating');
     api
       .translate(language, stale.map((m) => (m as { text: string }).text))
-      .then(({ texts }) => {
+      .then(({ texts, ok }) => {
         if (cancelled) return;
-        const byId = new Map(stale.map((m, i) => [m.id, texts[i]]));
+        const byId = new Map(stale.flatMap((m, i) => (ok[i] ? [[m.id, texts[i]] as [string, string]] : [])));
         setState((s) => ({
           ...s,
-          messages: s.messages.map((m) =>
-            byId.has(m.id) && m.kind === 'text' ? { ...m, text: byId.get(m.id)!, lang: language } : m,
-          ),
+          messages: s.messages.map((m) => (byId.has(m.id) && m.kind === 'text' ? { ...m, text: byId.get(m.id)!, lang: language } : m)),
         }));
       })
       .catch((e) => !cancelled && setError(errorCode(e)))
@@ -213,16 +159,8 @@ export function SessionProvider({ children }: { children: ReactNode }) {
   }, [language, hydrated]);
 
   const value: SessionApi = {
-    ...state,
-    hydrated,
-    busy,
-    error,
-    answer,
-    sendText,
-    askAgain,
-    restart,
-    clearError: () => setError(null),
-    citizen,
+    ...state, hydrated, busy, error, mood, gesture, send, setFacts, answer, restart,
+    clearError: () => setError(null), citizen,
   };
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
 }

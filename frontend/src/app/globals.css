@@ -3,22 +3,49 @@
 @tailwind utilities;
 
 :root {
-  --page: #f6f7f9;
-  --surface: #ffffff;
-  --ink: #111c2d;
-  --ink-muted: #46546a;
-  --ink-faint: #66738a;
-  --line: #dde2ea;
-  --line-strong: #b9c2d0;
-  --brand: #1b4b8f;
-  --brand-hover: #143a70;
-  --brand-soft: #e9f0fa;
+  --page: #f6f2ea;
+  --surface: #fffdf9;
+  --ink: #1b2430;
+  --ink-muted: #4a5565;
+  --ink-faint: #667082;
+  --line: #e2dbcd;
+  --line-strong: #c4baa6;
+  --brand: #1f5f6b;
+  --brand-hover: #174b55;
+  --brand-soft: #e3f0f1;
+  --on-brand: #ffffff;
+  --accent: #b9481f;
+  --accent-soft: #fbe9df;
   --ok: #17663a;
   --ok-soft: #e6f3ec;
   --warn: #7d5200;
   --warn-soft: #fff3d6;
   --bad: #a12626;
   --bad-soft: #fbe9e9;
+  color-scheme: light;
+}
+
+:root[data-theme='dark'] {
+  --page: #11171c;
+  --surface: #192129;
+  --ink: #e9eef2;
+  --ink-muted: #aab7c3;
+  --ink-faint: #8895a2;
+  --line: #2a353f;
+  --line-strong: #3f4d5a;
+  --brand: #72c3cf;
+  --brand-hover: #92d4de;
+  --brand-soft: #1b3940;
+  --on-brand: #0b1518;
+  --accent: #f08a5d;
+  --accent-soft: #3a2a22;
+  --ok: #6fcf97;
+  --ok-soft: #173325;
+  --warn: #e8b64c;
+  --warn-soft: #3a2e12;
+  --bad: #f19a9a;
+  --bad-soft: #3b1d1d;
+  color-scheme: dark;
 }
 
 @layer base {
@@ -28,8 +55,11 @@
   body {
     @apply bg-page font-sans text-base text-ink antialiased;
   }
-  h1, h2, h3 {
-    @apply font-semibold tracking-tight text-ink;
+  h1, h2 {
+    @apply font-display font-semibold tracking-tight text-ink;
+  }
+  h3 {
+    @apply font-semibold text-ink;
   }
   :focus-visible {
     outline: 3px solid var(--brand);
@@ -46,8 +76,8 @@
     @apply inline-flex min-h-tap items-center justify-center gap-2 rounded border px-5 font-medium transition-colors
       disabled:cursor-not-allowed disabled:opacity-50;
   }
-  .btn-primary {
-    @apply btn border-brand bg-brand text-white hover:bg-brand-hover;
+    .btn-primary {
+    @apply btn border-brand bg-brand text-onbrand hover:bg-brand-hover;
   }
   .btn-secondary {
     @apply btn border-line-strong bg-surface text-ink hover:bg-brand-soft;

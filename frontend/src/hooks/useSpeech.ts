@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { api } from '@/lib/api';
+import { hasSpeech } from '@/lib/languages';
 
 /**
  * Plays text through Sarvam text-to-speech. While audio plays, an analyser reads the real signal so the
@@ -32,8 +33,9 @@ export function useSpeech(onError: () => void) {
   }, []);
 
   const speak = useCallback(
-    async (text: string, language: string) => {
+    async (text: string, language: string): Promise<boolean> => {
       stop();
+      if (!hasSpeech(language)) return false;
       const mine = token.current;
       const key = `${language}:${text}`;
       let blob = cache.current.get(key);
@@ -45,9 +47,9 @@ export function useSpeech(onError: () => void) {
         }
       } catch {
         if (mine === token.current) onErr.current();
-        return;
+        return false;
       }
-      if (mine !== token.current) return; // superseded by a newer request or stopped
+      if (mine !== token.current) return false; // superseded by a newer request or stopped
 
       const el = (audioEl.current ??= new Audio());
       url.current = URL.createObjectURL(blob);
@@ -72,17 +74,27 @@ export function useSpeech(onError: () => void) {
         level.current = Math.min(1, rms * 4);
         raf.current = requestAnimationFrame(tick);
       };
-      el.onended = () => {
-        if (mine === token.current) stop();
-      };
-      try {
-        await el.play();
-        setSpeaking(true);
-        tick();
-      } catch {
-        if (mine === token.current) onErr.current();
-        stop();
-      }
+      // Resolves when playback finishes or is interrupted, so a caller can resume listening.
+      return new Promise<boolean>((resolve) => {
+        el.onended = () => {
+          if (mine === token.current) stop();
+          resolve(true);
+        };
+        el.onpause = () => {
+          if (!el.ended) resolve(false);
+        };
+        el.play().then(
+          () => {
+            setSpeaking(true);
+            tick();
+          },
+          () => {
+            if (mine === token.current) onErr.current();
+            stop();
+            resolve(false);
+          },
+        );
+      });
     },
     [stop],
   );

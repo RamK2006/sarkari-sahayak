@@ -1,78 +1,101 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
-import { ArrowRight } from 'lucide-react';
+import { ArrowRight, FileText, Keyboard, ListChecks, Phone, Search } from 'lucide-react';
+import { Avatar } from '@/components/Avatar';
 import { api } from '@/lib/api';
 import { useI18n } from '@/lib/i18n';
 import { LANGUAGES } from '@/lib/languages';
-import { useSession } from '@/lib/session';
+
+const ENTRIES = [
+  { href: '/talk', key: 'talk', Icon: Phone },
+  { href: '/khoj', key: 'khoj', Icon: Search },
+  { href: '/check', key: 'check', Icon: ListChecks },
+  { href: '/vault', key: 'vault', Icon: FileText },
+] as const;
 
 export default function Home() {
   const { t, language, setLanguage } = useI18n();
-  const { profile, skipped } = useSession();
   const [count, setCount] = useState<number | null>(null);
+  const [wave, setWave] = useState({ value: 'namaste' as const, key: 1 });
+  const level = useRef(0);
 
   useEffect(() => {
     api.meta().then((m) => setCount(m.scheme_count)).catch(() => setCount(null));
   }, []);
-
-  const started = Object.keys(profile).length + skipped.length > 0;
-  const steps = [1, 2, 3].map((n) => ({ title: t(`home.step${n}_title`), text: t(`home.step${n}_text`) }));
+  useEffect(() => setWave((w) => ({ ...w, key: w.key + 1 })), [language]);
 
   return (
-    <main id="main" className="mx-auto grid w-full max-w-6xl gap-12 px-4 py-10 sm:px-6 lg:grid-cols-[1.15fr_1fr] lg:gap-16 lg:py-16">
-      <section>
-        <h1 className="text-3xl sm:text-4xl">{t('home.title')}</h1>
-        <p className="mt-4 max-w-xl text-lg text-ink-muted">{t('home.subtitle')}</p>
-
-        <fieldset className="mt-8">
-          <legend className="mb-3 font-medium">{t('home.language_label')}</legend>
-          <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
-            {LANGUAGES.map((l) => (
-              <button
-                key={l.code}
-                type="button"
-                lang={l.code}
-                aria-pressed={language === l.code}
-                onClick={() => setLanguage(l.code)}
-                className={`min-h-tap rounded border px-4 text-left font-medium transition-colors ${
-                  language === l.code
-                    ? 'border-brand bg-brand-soft text-brand'
-                    : 'border-line-strong bg-surface hover:bg-brand-soft'
-                }`}
-              >
-                {l.name}
-              </button>
-            ))}
+    <main id="main">
+      <section className="border-b border-line">
+        <div className="mx-auto grid max-w-6xl items-center gap-8 px-4 py-10 sm:px-6 md:grid-cols-[1.2fr_1fr] lg:py-16">
+          <div>
+            <h1 className="text-4xl sm:text-5xl">{t('home.title')}</h1>
+            <p className="mt-5 max-w-xl text-lg text-ink-muted">{t('home.subtitle')}</p>
+            <div className="mt-8 flex flex-wrap gap-3">
+              <Link href="/talk" className="btn-primary text-lg">
+                <Phone aria-hidden className="h-5 w-5" />
+                {t('home.start_call')}
+              </Link>
+              <Link href="/talk" onClick={() => { try { localStorage.setItem('sa.mode', 'chat'); } catch { /* ignore */ } }} className="btn-secondary text-lg">
+                <Keyboard aria-hidden className="h-5 w-5" />
+                {t('home.start_chat')}
+              </Link>
+            </div>
           </div>
-        </fieldset>
-
-        <div className="mt-8">
-          <Link href="/assistant" className="btn-primary text-lg">
-            {started ? t('home.resume') : t('home.start')}
-            <ArrowRight aria-hidden className="h-5 w-5" />
-          </Link>
+          <div className="mx-auto w-full max-w-[360px]">
+            <Avatar language={language} state="idle" mood="happy" gesture={wave} level={level} />
+          </div>
         </div>
       </section>
 
-      <section aria-labelledby="how">
-        <h2 id="how" className="text-xl">{t('home.how_title')}</h2>
-        <ol className="mt-5 divide-y divide-line border-y border-line">
-          {steps.map((s, i) => (
-            <li key={i} className="flex gap-4 py-5">
-              <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-line-strong text-sm font-semibold" aria-hidden>
-                {i + 1}
-              </span>
-              <div>
-                <h3 className="text-base">{s.title}</h3>
-                <p className="mt-1 text-ink-muted">{s.text}</p>
-              </div>
-            </li>
+      <section className="mx-auto max-w-6xl px-4 py-10 sm:px-6" aria-labelledby="lang">
+        <h2 id="lang" className="text-xl">{t('home.language_label')}</h2>
+        <div className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-4 lg:grid-cols-6">
+          {LANGUAGES.map((l) => (
+            <button
+              key={l.code}
+              type="button"
+              lang={l.code}
+              aria-pressed={language === l.code}
+              onClick={() => setLanguage(l.code)}
+              className={`min-h-tap rounded border px-3 text-left font-medium transition-colors ${
+                language === l.code ? 'border-brand bg-brand-soft text-brand' : 'border-line-strong bg-surface hover:bg-brand-soft'
+              }`}
+            >
+              {l.name}
+            </button>
           ))}
-        </ol>
-        <p className="mt-6 text-sm text-ink-muted">{t('home.privacy')}</p>
-        {count !== null && <p className="mt-2 text-sm text-ink-muted">{t('home.coverage', { count })}</p>}
+        </div>
+      </section>
+
+      <section className="border-y border-line bg-surface" aria-labelledby="what">
+        <div className="mx-auto max-w-6xl px-4 py-10 sm:px-6">
+          <h2 id="what" className="sr-only">{t('home.how_title')}</h2>
+          <ul className="grid gap-px overflow-hidden rounded-lg border border-line bg-line sm:grid-cols-2">
+            {ENTRIES.map(({ href, key, Icon }, i) => (
+              <li key={key} className="bg-surface">
+                <Link href={href} className="group flex h-full items-start gap-4 p-6 hover:bg-brand-soft">
+                  <span className="font-display text-4xl font-semibold text-accent" aria-hidden>{i + 1}</span>
+                  <span className="flex-1">
+                    <span className="flex items-center gap-2 font-display text-xl font-semibold">
+                      <Icon aria-hidden className="h-5 w-5 text-brand" />
+                      {t(`home.${key}_title`)}
+                    </span>
+                    <span className="mt-1 block text-ink-muted">{t(`home.${key}_text`)}</span>
+                  </span>
+                  <ArrowRight aria-hidden className="mt-2 h-5 w-5 text-brand transition-transform group-hover:translate-x-1" />
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </div>
+      </section>
+
+      <section className="mx-auto max-w-6xl space-y-2 px-4 py-8 text-sm text-ink-muted sm:px-6">
+        <p>{t('home.privacy')}</p>
+        {count !== null && <p>{t('home.coverage', { count })}</p>}
       </section>
     </main>
   );

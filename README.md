@@ -1,33 +1,43 @@
 # Government Scheme Assistant
 
-A multilingual assistant that helps citizens find central government schemes they may be eligible for. It asks a few
-questions (typed, tapped or spoken), checks the answers against each scheme's published criteria, and explains every
-result in the citizen's own language.
+A voice-first, multilingual counselor for central government schemes and paperwork, built on Sarvam AI.
 
-Built on Sarvam AI: chat and tool calling (`sarvam-105b-conversations`), translation (`sarvam-translate:v1`),
-speech-to-text (`saaras:v4`) and text-to-speech (`bulbul:v4-flash`, `bulbul:v3` for Odia and Malayalam).
+| Capability | Where | Sarvam service |
+| --- | --- | --- |
+| Voice call: hands-free loop with barge-in, or opt-in text chat | `/talk` | Saaras (speech-to-text), Bulbul (text-to-speech), Sarvam 105B |
+| Scheme discovery by retrieval over official records, with explained eligibility | `/talk`, `/khoj`, `/schemes` | Sarvam 105B tool calling |
+| KYC document reading, validity review, missing-document check | `/vault`, scheme pages | Sarvam Vision (Doc AI) + Sarvam 105B |
+| Step-by-step form guide with spoken fields and voice confirmation | `/guide` | Sarvam 105B, Bulbul, Saaras |
+| 22 languages plus English across UI, replies and scheme text | everywhere | Sarvam Translate |
+| Quick check in five short steps | `/check` | none (deterministic engine) |
 
 ## How it works
 
-- **No recommendation without information.** Results are withheld until the core questions (age, gender, area,
-  occupation, household income) are answered or skipped. Further questions are chosen adaptively: only fields that
-  schemes still in contention are waiting on.
-- **Deterministic eligibility.** `backend/services/eligibility.py` evaluates typed criteria from the catalog and returns
-  one of four statuses (eligible, potentially eligible, more information needed, not eligible) with a per-criterion
-  reason. There are no scores or percentages, and the language model never decides eligibility.
-- **The model understands, it does not decide.** Sarvam chat extracts profile facts from free text or transcribed
-  speech via tool calling, and answers questions about schemes using only catalog records returned by a tool.
-- **One language everywhere.** UI text comes from `frontend/src/locales/<lang>.json`; criteria and reasons are returned by
-  the API as codes and rendered from those files; scheme text is translated by Sarvam and cached; model replies are
-  generated in the selected language and translated when the language changes mid-conversation.
-- **Stateless backend.** The profile and conversation live in the browser. Nothing is stored server-side.
-- **Real voice.** Recording goes to Sarvam STT; replies are synthesised by Sarvam TTS. The avatar's mouth follows the
-  actual audio signal, and its other states map to recording, a pending request and playback.
+- **Counselor, not a form.** The citizen says anything. The model calls tools: `search_schemes` (BM25 retrieval over
+  catalog records, `backend/services/rag.py`), `check_eligibility`, `record_profile`. Personal details are asked only
+  when an answer needs them. Eligibility is decided by the deterministic engine
+  (`backend/services/eligibility.py`), never by the model: eligible, potentially eligible, more information needed,
+  not assessed (search-only record), not eligible, each with per-criterion reasons.
+- **Documents.** Sarvam Vision reads the upload, the model extracts type, name, dates and the last four ID characters
+  (never the full number), and date arithmetic reviews validity (thresholds: `EXPIRING_SOON_DAYS`, `UPCOMING_DAYS`).
+  Scheme document requirements are matched to the vault through `backend/data/doc_types.json`. The vault keeps the
+  citizen's note on where each original is kept and what it is used for, and drives renewal reminders (in-app and
+  browser notifications). Everything is stored in the browser; the server is stateless.
+- **Form guide.** The model drafts steps in the citizen's language. A field value is kept only if it appears verbatim in
+  the citizen's own document data, so nothing is invented. Scheme guides are grounded in the scheme record; other goals
+  are labelled as general AI guidance.
+- **Avatar.** `frontend/src/lib/avatars.ts` holds one look per language (skin tone, attire, bindi, turban or cap,
+  greeting gesture). Mood and gesture come from the assistant's reply; listening, waiting and speaking come from real
+  activity; the mouth follows the audio signal. Change a look by editing that table.
+- **Languages.** Shipped UI files in `frontend/src/locales/`; any missing string is translated by Sarvam on demand and
+  cached in the browser. Sarvam speaks 11 of the languages (text-to-speech); the other 12 get text replies and spoken
+  input.
+- **Theme.** Light and dark, saved per browser.
 
-## Run locally
+## Run
 
 ```bash
-cp .env.example .env            # set SARVAM_API_KEY
+cp .env.example .env                        # set SARVAM_API_KEY
 pip install -r backend/requirements-dev.txt
 uvicorn backend.main:app --reload --port 8000
 ```
@@ -35,43 +45,41 @@ uvicorn backend.main:app --reload --port 8000
 ```bash
 cd frontend
 npm install
-npm run dev                     # http://localhost:3000 (proxies /api to BACKEND_URL, default http://localhost:8000)
+npm run dev                                 # http://localhost:3000, proxies /api to BACKEND_URL
 ```
 
-Or run both with Docker: `docker compose up --build`.
+Or `docker compose up --build`.
+
+One-time content generation (needs the Sarvam key; takes a while, safe to re-run, keeps existing strings):
+
+```bash
+python -m backend.scripts.translate_locales        # UI strings for all languages
+python -m backend.scripts.prewarm_translations     # scheme text for all languages
+```
+
+## Scaling the catalog to thousands of schemes
+
+`python -m backend.scripts.ingest_schemes export.json` merges records from a registry export into
+`backend/data/schemes_extra.json`. They become searchable and filterable by state immediately. Records without typed
+`criteria` are shown as "not assessed" and are never reported as eligible; add criteria to make them checkable. The
+shipped catalog has 15 central schemes, compiled from published guidelines and not re-verified against live sources
+(`last_verified` is empty), so review amounts and limits before launch.
 
 ## Deploy
 
-| Part     | How                                                                                                   |
-| -------- | ----------------------------------------------------------------------------------------------------- |
-| Backend  | `docker build -f backend/Dockerfile .` on any container host. Env: `SARVAM_API_KEY`, `CORS_ORIGINS`.   |
-| Frontend | Vercel (root directory `frontend`) or `frontend/Dockerfile`. Env: `BACKEND_URL` = the backend's URL.  |
-
-The browser only talks to the frontend's own `/api/*`, which proxies to `BACKEND_URL`, so the API key never reaches the
-client and no CORS setup is needed between them. `GET /healthz` is the liveness probe; `GET /readyz` reports whether the
-Sarvam key is configured. The in-memory rate limiter is per process; put a shared limiter in front when running several
-replicas.
-
-## Content and localization
-
-- **Catalog:** `backend/data/schemes.json` (15 central schemes). The integration boundary is `SchemeSource` in
-  `backend/services/catalog.py`; replace `JsonSchemeSource` with a feed from an authoritative registry to cover more
-  schemes. Each record carries its official `source_url`, and `last_verified` is `null` until a maintainer verifies the
-  record. The catalog was compiled from published scheme guidelines and has **not** been re-verified against the live
-  sources, so review amounts, limits and criteria before production use.
-- **UI strings:** edit `frontend/src/locales/en.json`, then regenerate the other languages with Sarvam translation:
-  `python -m backend.scripts.translate_locales` (keeps existing translations; `--force` redoes all). Check
-  completeness with `npm run audit:locales`. Machine translations should be reviewed by native speakers.
-- **Scheme text:** `python -m backend.scripts.prewarm_translations` translates the catalog for every language and stores
-  it in `backend/data/translations/`.
+Backend: `docker build -f backend/Dockerfile .` (env `SARVAM_API_KEY`, `CORS_ORIGINS`). Frontend: Vercel with root
+directory `frontend`, or `frontend/Dockerfile` (env `BACKEND_URL`). The browser only calls the frontend's own `/api`,
+which proxies to the backend, so the key never reaches the client. Probes: `/healthz`, `/readyz`. The rate limiter is
+per process.
 
 ## Tests
 
 ```bash
-python -m pytest backend/tests        # eligibility engine, intake flow, API contract (no network)
+python -m pytest backend/tests
 cd frontend && npm run typecheck && npm run audit:locales
 ```
 
-## Scope
+## Not included yet
 
-Not included yet: accounts and saved history (next phase), state-level schemes, and document upload.
+Accounts and cross-device sync (next phase), AR/3D avatar, live streaming of audio in both directions (the call is
+turn-based with interruption).

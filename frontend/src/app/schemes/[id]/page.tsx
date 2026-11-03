@@ -2,15 +2,15 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
-import { useParams, useRouter } from 'next/navigation';
-import { ArrowLeft, CircleAlert, CircleCheck, CircleHelp, CircleX, ExternalLink } from 'lucide-react';
+import { useParams } from 'next/navigation';
+import { ArrowLeft, CircleAlert, CircleCheck, CircleHelp, CircleX, ExternalLink, ListChecks } from 'lucide-react';
 import { DocumentChecklist } from '@/components/DocumentChecklist';
 import { StatusIcon } from '@/components/StatusMark';
 import { api, ApiError } from '@/lib/api';
 import { useCriterionText } from '@/lib/criteria';
 import { useI18n } from '@/lib/i18n';
 import { useSession } from '@/lib/session';
-import type { CriterionItem, Outcome, SchemeDetailResponse } from '@/lib/types';
+import type { CriterionItem, DocStatus, Outcome, SchemeDetailResponse } from '@/lib/types';
 
 type Load = { state: 'loading' } | { state: 'error'; code: string } | { state: 'ok'; data: SchemeDetailResponse };
 
@@ -23,10 +23,9 @@ const OUTCOME_ICON: Record<Outcome, { Icon: typeof CircleCheck; color: string }>
 
 export default function SchemeDetailPage() {
   const { id } = useParams<{ id: string }>();
-  const router = useRouter();
   const { t } = useI18n();
   const criterionText = useCriterionText();
-  const { citizen, hydrated, askAgain } = useSession();
+  const { citizen, hydrated } = useSession();
   const [load, setLoad] = useState<Load>({ state: 'loading' });
 
   const run = useCallback(() => {
@@ -41,11 +40,6 @@ export default function SchemeDetailPage() {
   useEffect(() => {
     if (hydrated) run();
   }, [hydrated, run]);
-
-  const provide = async (field: string) => {
-    await askAgain(field);
-    router.push('/assistant');
-  };
 
   const back = (
     <Link href="/schemes" className="-ml-2 inline-flex min-h-tap items-center gap-2 px-2 font-medium text-brand">
@@ -76,7 +70,8 @@ export default function SchemeDetailPage() {
     );
   }
 
-  const { scheme, evaluation, ready, translated } = load.data;
+  const { scheme, evaluation, ready, translated, document_status: docStatus } = load.data;
+  const missingDocs = docStatus.filter((d) => d.status === 'missing' || d.status === 'expired').length;
   const verifyItems = evaluation.items.filter((i) => i.outcome === 'verify');
   const checkItems = evaluation.items.filter((i) => i.outcome !== 'verify');
 
@@ -90,9 +85,9 @@ export default function SchemeDetailPage() {
           {item.outcome === 'unknown' && item.field && (
             <div className="mt-1 flex flex-wrap items-center gap-x-3">
               {item.skipped && <span className="text-sm text-ink-muted">{t('detail.skipped_info')}</span>}
-              <button type="button" onClick={() => provide(item.field!)} className="min-h-tap text-sm font-medium text-brand underline underline-offset-4">
+              <Link href="/check" className="inline-flex min-h-tap items-center text-sm font-medium text-brand underline underline-offset-4">
                 {t('detail.provide_info')}
-              </button>
+              </Link>
             </div>
           )}
         </div>
@@ -152,8 +147,14 @@ export default function SchemeDetailPage() {
       <section className="mt-10" aria-labelledby="docs">
         <h2 id="docs" className="text-xl">{t('detail.documents')}</h2>
         <div className="mt-2">
-          <DocumentChecklist schemeId={scheme.id} documents={scheme.documents} />
+          <DocumentChecklist schemeId={scheme.id} documents={scheme.documents} status={docStatus.map((d) => d.status)} />
         </div>
+        {docStatus.length > 0 && (
+          <p className="mt-3 text-sm text-ink-muted">
+            {missingDocs > 0 ? t('detail.docs_missing', { count: missingDocs }) : t('detail.docs_all')}{' '}
+            <Link href="/vault" className="font-medium text-brand underline underline-offset-4">{t('detail.add_documents')}</Link>
+          </p>
+        )}
       </section>
 
       <section className="mt-10" aria-labelledby="apply">
@@ -178,6 +179,10 @@ export default function SchemeDetailPage() {
             </li>
           ))}
         </ol>
+        <Link href={`/guide?scheme=${scheme.id}`} className="btn-secondary mt-5 mr-3">
+          <ListChecks aria-hidden className="h-5 w-5" />
+          {t('detail.guide_me')}
+        </Link>
         {scheme.apply.url && (
           <a href={scheme.apply.url} target="_blank" rel="noopener noreferrer" className="btn-primary mt-5">
             {t('detail.open_website')}

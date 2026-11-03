@@ -14,6 +14,7 @@ The scheme status is derived purely from those outcomes (no scores, no weighting
   insufficient_info     none unmet, at least one unknown
   potentially_eligible  all decidable criteria met, at least one verify item remains
   eligible              every criterion met, nothing left to verify
+  not_assessed          the record has no machine-readable criteria (search-only record)
 """
 
 from __future__ import annotations
@@ -23,7 +24,7 @@ from typing import Any, Callable
 Profile = dict[str, Any]
 Result = tuple[str, dict[str, Any], str | None]  # (outcome, params, field)
 
-STATUS_ORDER = ["eligible", "potentially_eligible", "insufficient_info", "not_eligible"]
+STATUS_ORDER = ["eligible", "potentially_eligible", "insufficient_info", "not_assessed", "not_eligible"]
 
 
 def _bool_required(field: str, want: bool = True) -> Callable[[Profile, dict], Result]:
@@ -138,6 +139,8 @@ _CHECKS: dict[str, Callable[[Profile, dict], Result]] = {
 
 
 def evaluate_scheme(profile: Profile, skipped: set[str], scheme: dict) -> dict:
+    if not scheme.get("criteria"):
+        return {"scheme_id": scheme["id"], "status": "not_assessed", "items": [], "missing_fields": []}
     items: list[dict] = []
     for criterion in scheme["criteria"]:
         outcome, params, field = _CHECKS[criterion["type"]](profile, criterion)

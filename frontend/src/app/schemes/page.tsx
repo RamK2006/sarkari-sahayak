@@ -55,7 +55,7 @@ export default function SchemesPage() {
         <section className="mt-8 border-y border-line py-8">
           <h2 className="text-xl">{t('results.gate_title')}</h2>
           <p className="mt-2 max-w-xl text-ink-muted">{t('results.gate_text')}</p>
-          <Link href="/assistant" className="btn-primary mt-5">
+          <Link href="/check" className="btn-primary mt-5">
             {t('results.gate_action')}
           </Link>
         </section>
@@ -78,7 +78,7 @@ function Results({ data, showNot, setShowNot }: { data: EligibilityResponse; sho
       <div className="mt-4 flex flex-wrap items-center gap-x-6 gap-y-2 text-sm text-ink-muted">
         <span>{t('results.checked', { count: data.results.length })}</span>
         {canRefine && (
-          <Link href="/assistant" className="font-medium text-brand underline underline-offset-4">
+          <Link href="/check" className="font-medium text-brand underline underline-offset-4">
             {t('results.refine')}
           </Link>
         )}

@@ -4,6 +4,8 @@ from __future__ import annotations
 
 import base64
 import logging
+import threading
+import time
 from functools import lru_cache
 from typing import Any
 
@@ -12,6 +14,9 @@ from sarvamai import SarvamAI
 from backend.config import bcp47, get_settings
 
 log = logging.getLogger(__name__)
+
+# At most this many translate calls at once; Sarvam rate-limits bursts.
+_translate_slots = threading.Semaphore(3)
 
 # Conversational speakers per language (Bulbul v4). Falls back to a language-neutral voice.
 _SPEAKERS = {
@@ -62,20 +67,30 @@ class SarvamClient:
 
     # ── Translation ─────────────────────────────────────────────────────
     def translate(self, text: str, target: str, source: str = "en") -> str:
+        """Translate text. `source="auto"` (language detection) is only supported by Mayura, so it routes there;
+        everything else uses Sarvam-Translate. Rate-limit responses are retried with backoff."""
         if not text.strip() or target == source:
             return text
-        try:
-            resp = self._client.text.translate(
-                input=text,
-                source_language_code="auto" if source == "auto" else bcp47(source),
-                target_language_code=bcp47(target),
-                model=self._settings.TRANSLATE_MODEL,
-                mode="formal",
-            )
-            return resp.translated_text
-        except Exception as exc:  # noqa: BLE001
-            log.warning("Sarvam translate failed (%s -> %s): %.200s", source, target, exc)
-            raise SarvamUnavailable("translate") from exc
+        model = "mayura:v1" if source == "auto" else self._settings.TRANSLATE_MODEL
+        last: Exception | None = None
+        for attempt in range(4):
+            try:
+                with _translate_slots:
+                    resp = self._client.text.translate(
+                        input=text,
+                        source_language_code="auto" if source == "auto" else bcp47(source),
+                        target_language_code=bcp47(target),
+                        model=model,
+                        mode="formal",
+                    )
+                return resp.translated_text
+            except Exception as exc:  # noqa: BLE001
+                last = exc
+                if "429" not in str(exc) and "rate" not in str(exc).lower():
+                    break
+                time.sleep(1.5 * (2**attempt))
+        log.warning("Sarvam translate failed (%s -> %s): %.200s", source, target, last)
+        raise SarvamUnavailable("translate") from last
 
     # ── Speech ──────────────────────────────────────────────────────────
     def speech_to_text(self, audio: bytes, language: str, content_type: str = "audio/webm") -> str:

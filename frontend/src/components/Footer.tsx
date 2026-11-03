@@ -7,7 +7,7 @@ export function Footer() {
   const { t } = useI18n();
   const pathname = usePathname();
   // The conversation fills the viewport; the disclaimer is shown on the other pages.
-  if (pathname === '/assistant') return null;
+  if (pathname === '/talk' || pathname === '/guide') return null;
   return (
     <footer className="border-t border-line bg-surface">
       <p className="mx-auto max-w-6xl px-4 py-5 text-sm text-ink-muted sm:px-6">{t('footer.disclaimer')}</p>

@@ -30,4 +30,4 @@ export function useCriterionText() {
   };
 }
 
-export const STATUS_ORDER: Status[] = ['eligible', 'potentially_eligible', 'insufficient_info', 'not_eligible'];
+export const STATUS_ORDER: Status[] = ['eligible', 'potentially_eligible', 'insufficient_info', 'not_assessed', 'not_eligible'];

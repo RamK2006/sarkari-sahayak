@@ -1,10 +1,11 @@
-import { CircleAlert, CircleCheck, CircleHelp, CircleX } from 'lucide-react';
+import { CircleAlert, CircleCheck, CircleHelp, CircleX, FileSearch } from 'lucide-react';
 import type { Status } from '@/lib/types';
 
 const STYLE: Record<Status, { Icon: typeof CircleCheck; color: string }> = {
   eligible: { Icon: CircleCheck, color: 'text-ok' },
   potentially_eligible: { Icon: CircleAlert, color: 'text-warn' },
   insufficient_info: { Icon: CircleHelp, color: 'text-brand' },
+  not_assessed: { Icon: FileSearch, color: 'text-ink-faint' },
   not_eligible: { Icon: CircleX, color: 'text-ink-faint' },
 };
 

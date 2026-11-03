@@ -10,11 +10,14 @@ const config: Config = {
         ink: { DEFAULT: 'var(--ink)', muted: 'var(--ink-muted)', faint: 'var(--ink-faint)' },
         line: { DEFAULT: 'var(--line)', strong: 'var(--line-strong)' },
         brand: { DEFAULT: 'var(--brand)', hover: 'var(--brand-hover)', soft: 'var(--brand-soft)' },
+        onbrand: 'var(--on-brand)',
+        accent: { DEFAULT: 'var(--accent)', soft: 'var(--accent-soft)' },
         ok: { DEFAULT: 'var(--ok)', soft: 'var(--ok-soft)' },
         warn: { DEFAULT: 'var(--warn)', soft: 'var(--warn-soft)' },
         bad: { DEFAULT: 'var(--bad)', soft: 'var(--bad-soft)' },
       },
       fontFamily: {
+        display: ['var(--font-display)', 'var(--font-inter)', '"Noto Serif"', '"Nirmala UI"', 'Georgia', 'serif'],
         sans: [
           'var(--font-inter)',
           '"Noto Sans"',

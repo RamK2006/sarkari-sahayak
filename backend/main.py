@@ -29,8 +29,8 @@ app.add_middleware(
 )
 
 # Per-client sliding-window limit on the endpoints that call Sarvam.
-_LIMITED = ("/api/chat", "/api/translate", "/api/voice/")
-_WINDOW, _MAX_CALLS = 60.0, 40
+_LIMITED = ("/api/chat", "/api/translate", "/api/voice/", "/api/documents/", "/api/guide/")
+_WINDOW, _MAX_CALLS = 60.0, 60
 _hits: dict[str, deque[float]] = defaultdict(deque)
 
 

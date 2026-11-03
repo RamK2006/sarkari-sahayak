@@ -69,7 +69,7 @@ def main(argv: list[str]) -> int:
         if path.exists() and not force:
             existing = json.loads(path.read_text(encoding="utf-8"))
         todo = [k for k in source if k not in existing]
-        with ThreadPoolExecutor(max_workers=4) as pool:
+        with ThreadPoolExecutor(max_workers=6) as pool:
             done = list(pool.map(lambda k: _translate_one(source[k], lang), todo))
         for k, v in zip(todo, done):
             if v is None:

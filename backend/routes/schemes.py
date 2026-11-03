@@ -5,11 +5,14 @@ from __future__ import annotations
 from fastapi import APIRouter
 
 from backend.errors import api_error
-from backend.schemas import AnswerRequest, Citizen, valid_language
-from backend.services import intake
+import json
+
+from backend.config import get_settings
+from backend.schemas import AnswerRequest, Citizen, SearchRequest, valid_language
+from backend.services import documents, intake, rag
 from backend.services.catalog import get_catalog
 from backend.services.eligibility import evaluate_all, evaluate_scheme
-from backend.services.translation import localize_scheme
+from backend.services.translation import localize_scheme, translate_many
 
 router = APIRouter(prefix="/api", tags=["schemes"])
 
@@ -81,7 +84,29 @@ def scheme_detail(scheme_id: str, body: Citizen) -> dict:
     view, ok = localize_scheme(scheme, valid_language(body.language), detail=True)
     return {
         "scheme": view,
+        "document_status": documents.match_vault(scheme["documents"], [v.model_dump() for v in body.vault]),
         "evaluation": evaluate_scheme(profile, skipped, scheme),
         "translated": ok,
         "ready": intake.core_resolved(profile, skipped),
     }
+
+
+@router.post("/search/schemes")
+def search_schemes(body: SearchRequest) -> dict:
+    """Yojana Khoj: keyword retrieval plus structured filters (age, gender, income, category, land, state)."""
+    filters = intake.clean_profile(body.filters)
+    hits = rag.search(body.query, filters=filters, state=body.state, limit=body.limit)
+    lang = valid_language(body.language)
+    out, all_ok = [], True
+    for h in hits:
+        view, ok = localize_scheme(h["scheme"], lang)
+        all_ok = all_ok and ok
+        out.append({"scheme": view, "status": h["evaluation"]["status"], "missing_fields": h["evaluation"]["missing_fields"]})
+    return {"results": out, "translated": all_ok, "total_catalog": len(get_catalog().all())}
+
+
+@router.get("/states")
+def states(lang: str = "en") -> dict:
+    names = json.loads(get_settings().STATES_PATH.read_text(encoding="utf-8"))
+    translated, ok = translate_many(names, valid_language(lang))
+    return {"states": [{"value": n, "label": t} for n, t in zip(names, translated)], "translated": ok}

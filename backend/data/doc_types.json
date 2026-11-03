@@ -1,0 +1,160 @@
+[
+ {
+  "id": "mobile_number",
+  "keywords": [
+   "mobile number"
+  ],
+  "description": "Mobile number",
+  "vault": false
+ },
+ {
+  "id": "photograph",
+  "keywords": [
+   "photograph",
+   "photo"
+  ],
+  "description": "Passport-size photograph",
+  "vault": false
+ },
+ {
+  "id": "aadhaar",
+  "keywords": [
+   "aadhaar",
+   "aadhar"
+  ],
+  "description": "Aadhaar card issued by UIDAI"
+ },
+ {
+  "id": "pan",
+  "keywords": [
+   "pan card",
+   "pan "
+  ],
+  "description": "Permanent Account Number card"
+ },
+ {
+  "id": "ration_card",
+  "keywords": [
+   "ration card",
+   "phh",
+   "aay card"
+  ],
+  "description": "Ration card (PHH, AAY or state ration card)"
+ },
+ {
+  "id": "bpl_card",
+  "keywords": [
+   "bpl card",
+   "bpl /",
+   "secc"
+  ],
+  "description": "BPL card or SECC-listing proof"
+ },
+ {
+  "id": "income_certificate",
+  "keywords": [
+   "income certificate"
+  ],
+  "description": "Income certificate issued by a competent authority"
+ },
+ {
+  "id": "caste_certificate",
+  "keywords": [
+   "caste certificate",
+   "category certificate"
+  ],
+  "description": "Caste or community certificate"
+ },
+ {
+  "id": "domicile_certificate",
+  "keywords": [
+   "domicile",
+   "residence certificate",
+   "address proof",
+   "proof of address"
+  ],
+  "description": "Domicile, residence or address proof"
+ },
+ {
+  "id": "driving_licence",
+  "keywords": [
+   "driving licen",
+   "driver's licen"
+  ],
+  "description": "Driving licence"
+ },
+ {
+  "id": "passport",
+  "keywords": [
+   "passport"
+  ],
+  "description": "Indian passport"
+ },
+ {
+  "id": "voter_id",
+  "keywords": [
+   "voter id",
+   "voter card",
+   "epic",
+   "age proof"
+  ],
+  "description": "Voter ID (EPIC) card"
+ },
+ {
+  "id": "bank_passbook",
+  "keywords": [
+   "passbook",
+   "bank account",
+   "bank statement",
+   "savings bank"
+  ],
+  "description": "Bank passbook or account statement"
+ },
+ {
+  "id": "land_records",
+  "keywords": [
+   "land",
+   "khasra",
+   "khatauni",
+   "7/12"
+  ],
+  "description": "Land ownership records"
+ },
+ {
+  "id": "birth_certificate",
+  "keywords": [
+   "birth certificate"
+  ],
+  "description": "Birth certificate"
+ },
+ {
+  "id": "death_certificate",
+  "keywords": [
+   "death certificate"
+  ],
+  "description": "Death certificate"
+ },
+ {
+  "id": "marksheet",
+  "keywords": [
+   "marksheet",
+   "mark sheet",
+   "bonafide",
+   "admission proof"
+  ],
+  "description": "Marksheet or school/college admission proof"
+ },
+ {
+  "id": "disability_certificate",
+  "keywords": [
+   "disability certificate",
+   "udid"
+  ],
+  "description": "Disability certificate or UDID card"
+ },
+ {
+  "id": "other",
+  "keywords": [],
+  "description": "Any other document"
+ }
+]
